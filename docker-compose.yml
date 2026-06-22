@@ -1,0 +1,29 @@
+# Stack separado do mtg-collection-manager — conecta na mesma rede Docker
+# para falar com a API (mtg_api:3001) sem expor portas novas no host.
+#
+# Pré-requisito: o stack do mtg-collection-manager precisa estar de pé
+# (docker compose up -d nele primeiro), pois a rede externa abaixo é
+# criada por ele.
+#
+# Configure MTGA_LOG_DIR no .env apontando para a pasta que contém o
+# Player.log no host, ex (Windows):
+#   MTGA_LOG_DIR=C:\Users\SEU_USUARIO\AppData\LocalLow\Wizards Of The Coast\MTGA
+
+services:
+  tracker:
+    build: .
+    container_name: mtga_tracker
+    restart: unless-stopped
+    environment:
+      API_URL: http://mtg_api:3001
+      LOG_PATH: /log/Player.log
+    volumes:
+      - "${MTGA_LOG_DIR}:/log:ro"
+      - ./output:/app/output
+    networks:
+      - mtg_default
+
+networks:
+  mtg_default:
+    external: true
+    name: mtg-collection-manager_default

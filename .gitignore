@@ -1,0 +1,5 @@
+.env
+output/
+arena_log_*.txt
+__pycache__/
+*.pyc
