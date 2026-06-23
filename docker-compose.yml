@@ -1,5 +1,6 @@
 # Stack separado do mtg-collection-manager — conecta na mesma rede Docker
-# para falar com a API (mtg_api:3001) sem expor portas novas no host.
+# para falar com a API (api:3001, nome do servico Compose — funciona
+# independente de CONTAINER_PREFIX) sem expor portas novas no host.
 #
 # Pré-requisito: o stack do mtg-collection-manager precisa estar de pé
 # (docker compose up -d nele primeiro), pois a rede externa abaixo é
@@ -15,7 +16,7 @@ services:
     container_name: mtga_tracker
     restart: unless-stopped
     environment:
-      API_URL: http://mtg_api:3001
+      API_URL: http://api:3001
       LOG_PATH: /log/Player.log
     volumes:
       - "${MTGA_LOG_DIR}:/log:ro"
