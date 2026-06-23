@@ -16,9 +16,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--log", default=DEFAULT_LOG, help="Caminho do Player.log")
     ap.add_argument("--api", default=os.environ.get("API_URL", "http://localhost:3001"), help="URL do mtg_api")
+    ap.add_argument("--api-token", default=os.environ.get("API_TOKEN"), help="Token de API (gere com POST /api/auth/api-token, ver README) — necessario para registrar partidas, que agora sao por usuario")
     ap.add_argument("--save", action="store_true", help="Salva eventos em arena_log_YYYY-MM-DD.txt")
     ap.add_argument("--history", action="store_true", help="Le o Player.log inteiro do inicio (importa partidas passadas) e sai")
     args = ap.parse_args()
+
+    if not args.api_token:
+        print("[!] API_TOKEN nao configurado — partidas serao detectadas mas NAO registradas na API.")
+        print("    Gere um token com POST /api/auth/api-token e configure API_TOKEN no .env (ver README).")
 
     card_map = load_card_map(args.api)
     state = {"match_id": "", "turn": 0, "phase": "", "players": {}, "objects": {}, "zones": {}}
@@ -43,11 +48,11 @@ def main():
                 out.write(line + "\n")
                 out.flush()
             if event[2] == "MATCH_START":
-                api_match_id = post_match_start(args.api, state)
+                api_match_id = post_match_start(args.api, state, args.api_token)
                 if args.history:
                     post_log(args.api, line)
             elif event[2] == "GAME_END":
-                post_match_end(args.api, api_match_id, state, state.get("result", "draw"))
+                post_match_end(args.api, api_match_id, state, state.get("result", "draw"), args.api_token)
                 if args.history:
                     post_log(args.api, line)
 

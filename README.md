@@ -35,7 +35,7 @@ automaticamente.
 
 ## Como rodar
 
-### 1. Configurar o caminho do `Player.log`
+### 1. Configurar o caminho do `Player.log` e o token de API
 
 ```bash
 cp .env.example .env
@@ -47,6 +47,25 @@ Edite `.env` e ajuste `MTGA_LOG_DIR` para a pasta que contém o
 ```
 MTGA_LOG_DIR=C:\Users\SEU_USUARIO\AppData\LocalLow\Wizards Of The Coast\MTGA
 ```
+
+Desde a versão multi-usuário do mtg-collection-manager, registrar
+partidas exige um **token de API** da sua conta (sem ele, o tracker
+detecta as partidas mas não consegue salvá-las). Gere um:
+
+```bash
+# 1. login normal (troque email/senha pela sua conta)
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"voce@exemplo.com","password":"sua_senha"}'
+
+# 2. com o token retornado, gera o token de API (de novo com a senha)
+curl -X POST http://localhost:3001/api/auth/api-token \
+  -H "Authorization: Bearer <token_do_passo_1>" \
+  -H "Content-Type: application/json" \
+  -d '{"password":"sua_senha"}'
+```
+
+Cole o token retornado em `API_TOKEN=` no `.env`.
 
 ### 2. Subir o container
 
@@ -82,9 +101,9 @@ disponível na UI do mtg-collection-manager, aba **Partidas**
 
 ```bash
 pip install --upgrade pip  # só stdlib, sem dependências externas
-python main.py --api http://localhost:3001
+python main.py --api http://localhost:3001 --api-token <seu-token>
 # ou para importar histórico:
-python main.py --api http://localhost:3001 --history
+python main.py --api http://localhost:3001 --api-token <seu-token> --history
 ```
 
 Por padrão usa `%USERPROFILE%\AppData\LocalLow\Wizards Of The Coast\MTGA\Player.log`
@@ -96,7 +115,7 @@ Por padrão usa `%USERPROFILE%\AppData\LocalLow\Wizards Of The Coast\MTGA\Player
 |---|---|
 | `log_reader.py` | Segue o `Player.log` (`tail` ou leitura completa) e extrai os blocos JSON |
 | `parser.py` | Interpreta cada bloco (estado da partida, vida, fases, MATCH_START/GAME_END) |
-| `card_db.py` | Mapeamento `arena_id → nome` (via API) e chamadas HTTP para `/api/matches` |
+| `card_db.py` | Mapeamento `arena_id → nome` (via API, público) e chamadas HTTP autenticadas (`API_TOKEN`) para `/api/matches` |
 | `formatter.py` | Formata eventos para impressão colorida no terminal |
 | `main.py` | Loop principal — liga tudo |
 
