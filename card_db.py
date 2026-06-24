@@ -11,13 +11,14 @@ def _parse_log_ts(ts):
     return datetime.strptime(ts, "%d/%m/%Y %H:%M:%S").isoformat()
 
 
-def load_card_map(api_url):
-    """Busca {arena_id: nome} do mtg_api existente. Endpoint publico (sem
-    auth) — catalogo global de cartas, nao depende de usuario. Em caso de
-    erro de rede/endpoint ausente, retorna {} (formatter cai no fallback
-    #grpId)."""
+def load_card_map(api_url, api_token=None):
+    """Busca {arena_id: nome} do mtg_api existente (catalogo global). Exige
+    auth como o resto da API — envia o API_TOKEN. Em caso de erro de rede/
+    auth, retorna {} (formatter cai no fallback #grpId)."""
     try:
-        with urllib.request.urlopen(f"{api_url}/api/cards/arena-map", timeout=5) as resp:
+        headers = {"Authorization": f"Bearer {api_token}"} if api_token else {}
+        req = urllib.request.Request(f"{api_url}/api/cards/arena-map", headers=headers)
+        with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.load(resp)
         return {int(k): v for k, v in data.items()}
     except Exception:
@@ -72,7 +73,6 @@ def post_match_end(api_url, match_db_id, state, result, api_token=None):
     _request(f"{api_url}/api/matches/{match_db_id}", payload, "PATCH", api_token)
 
 
-def post_log(api_url, message):
-    """Registra uma linha de progresso, exibida na UI ao clicar em 'Sincronizar'.
-    Endpoint publico (sem auth) — so texto de log, sem dado sensivel."""
-    _request(f"{api_url}/api/sync-log", {"message": message}, "POST")
+def post_log(api_url, message, api_token=None):
+    """Registra uma linha de progresso, exibida na UI ao clicar em 'Sincronizar'."""
+    _request(f"{api_url}/api/sync-log", {"message": message}, "POST", api_token)

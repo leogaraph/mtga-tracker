@@ -25,7 +25,7 @@ def main():
         print("[!] API_TOKEN nao configurado — partidas serao detectadas mas NAO registradas na API.")
         print("    Gere um token com POST /api/auth/api-token e configure API_TOKEN no .env (ver README).")
 
-    card_map = load_card_map(args.api)
+    card_map = load_card_map(args.api, args.api_token)
     state = {"match_id": "", "turn": 0, "phase": "", "players": {}, "objects": {}, "zones": {}}
 
     out = None
@@ -35,7 +35,7 @@ def main():
     lines = read_log(args.log) if args.history else tail_log(args.log)
 
     if args.history:
-        post_log(args.api, "Sincronização iniciada: lendo Player.log...")
+        post_log(args.api, "Sincronização iniciada: lendo Player.log...", args.api_token)
 
     api_match_id = None
     for block in extract_json_blocks(lines):
@@ -50,14 +50,14 @@ def main():
             if event[2] == "MATCH_START":
                 api_match_id = post_match_start(args.api, state, args.api_token)
                 if args.history:
-                    post_log(args.api, line)
+                    post_log(args.api, line, args.api_token)
             elif event[2] == "GAME_END":
                 post_match_end(args.api, api_match_id, state, state.get("result", "draw"), args.api_token)
                 if args.history:
-                    post_log(args.api, line)
+                    post_log(args.api, line, args.api_token)
 
     if args.history:
-        post_log(args.api, "Sincronização concluída.")
+        post_log(args.api, "Sincronização concluída.", args.api_token)
 
 
 if __name__ == "__main__":
